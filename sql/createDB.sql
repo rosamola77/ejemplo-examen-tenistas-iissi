@@ -284,3 +284,41 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- ============================================================================
+-- 6.- TRANSACCIONES
+-- ============================================================================
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE create2Trainers(
+	 person_id1 INT,
+	 name1 VARCHAR(100),
+	 age1 INT,
+	 nationality1 VARCHAR(100),
+	 experience1 INT, 
+	 speciality1 VARCHAR(50),
+	 person_id2 INT,
+	 name2 VARCHAR(100),
+	 age2 INT,
+	 nationality2 VARCHAR(100),
+    experience2 INT, 
+    speciality2 VARCHAR(50)
+)
+BEGIN
+    START TRANSACTION;
+    tblock: BEGIN
+        DECLARE EXIT HANDLER FOR SQLEXCEPTION, SQLWARNING
+        BEGIN
+            ROLLBACK;
+            RESIGNAL;
+        END;
+         INSERT INTO people (person_id, name, age, nationality) VALUES
+         	(person_id1, NAME1, age1, nationality1),
+         	(person_id2, NAME2, age2, nationality2);
+			INSERT INTO trainer (trainer_id, experience, speciality) VALUES
+				(person_id1, experience1, speciality1),
+				(person_id2, experience2, speciality2);
+        COMMIT;
+    END tblock;
+END //
+DELIMITER ;

@@ -217,6 +217,63 @@ BEGIN
 END //
 DELIMITER ;
 
+-- T1.1: Test de transacción con los datos introducidos CORRECTOS
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_t1_valid()
+BEGIN
+	 DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	     CALL p_log_test('T-1.1', 'ERROR: Rollback de transacción con datos correctos', 'FAIL');
+    -- Se popula la base de datos para tener los datos de prueba
+    CALL p_populate_db();
+
+    -- Se realiza la transacción usando el proccedimiento (los dos tenistas correctos)
+	 CALL create2Trainers(
+	 23,
+	 'Pepe Viyuela',
+	 55,
+	 'España',
+	 5,
+	 'Individual',
+	 24,
+	 'Puff Daddy',
+	 33,
+	 'Estados Unidos',
+	 10,
+	 'Dobles'
+	 );
+	 CALL p_log_test('T-1.1', 'Transacción: Se han añadido datos correctos', 'PASS');
+END //
+DELIMITER ;
+
+-- T1.2: Test de transacción con los datos introducidos INCORRECTOS
+
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_t1_invalid()
+BEGIN
+	 DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	     CALL p_log_test('T-1.2', 'Transacción: Rollback de transacción con datos incorrectos', 'PASS');
+    -- Se popula la base de datos para tener los datos de prueba
+    CALL p_populate_db();
+
+    -- Se realiza la transacción usando el proccedimiento (primer trainer bien, segundo trainer mal)
+	 CALL create2Trainers(
+	 23,
+	 'Pepe Viyuela',
+	 55,
+	 'España',
+	 5,
+	 'Individual',
+	 24,
+	 'Puff Daddy',
+	 33,
+	 'Estados Unidos',
+	 10,
+	 'Dobles'
+	 );
+	 CALL p_log_test('T-1.2', 'ERROR: Se han añadido datos incorrectos', 'FAIL');
+END //
+DELIMITER ;
 -- =============================================================
 -- ORQUESTADOR: Ejecutar todos los tests
 -- =============================================================
@@ -235,7 +292,8 @@ BEGIN
     CALL p_test_sets_invalid_winner();
     CALL p_test_sets_max_5_sets();
     CALL p_test_ra02_max_players_a_trainer_has();
-    
+    CALL p_test_t1_valid();
+    CALL p_test_t1_invalid();
     -- Ejecutar test F1 (devuelve resultset)
     CALL p_test_f1_sets_won_by_player();
 
