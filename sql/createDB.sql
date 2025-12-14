@@ -313,9 +313,9 @@ BEGIN
             RESIGNAL;
         END;
          INSERT INTO people (person_id, name, age, nationality) VALUES
-         	(person_id1, NAME1, age1, nationality1),
-         	(person_id2, NAME2, age2, nationality2);
-			INSERT INTO trainer (trainer_id, experience, speciality) VALUES
+         	(person_id1, name1, age1, nationality1),
+         	(person_id2, name2, age2, nationality2);
+			INSERT INTO trainers (trainer_id, experience, speciality) VALUES
 				(person_id1, experience1, speciality1),
 				(person_id2, experience2, speciality2);
         COMMIT;

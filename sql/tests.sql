@@ -5,7 +5,7 @@
 -- Filosofía: similar a 'ejemplo_tests_procedimientos.sql' (Bodegas)
 -- 
 
-USE TenisDB;
+USE tenisdb;
 
 -- =============================================================
 -- TABLA DE RESULTADOS DE TESTS
@@ -269,7 +269,7 @@ BEGIN
 	 33,
 	 'Estados Unidos',
 	 10,
-	 'Dobles'
+	 'Diddy'
 	 );
 	 CALL p_log_test('T-1.2', 'ERROR: Se han añadido datos incorrectos', 'FAIL');
 END //
