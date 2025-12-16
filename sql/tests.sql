@@ -316,7 +316,7 @@ BEGIN
 
     CALL p_populate_db();
     -- Carlos Alcaraz está en posición 3 el 2024-05-01
-    -- Intentar insertar posición 60 (cambio de 57 posiciones) el 2024-06-01
+    -- Intentar insertar posición 60 el 2024-06-01: ABS(60 - 3) = 57 posiciones (excede el límite de 50)
     INSERT INTO ranking (player_id, fecha, posicion) VALUES (2, '2024-06-01', 60);
     CALL p_log_test('RANK-03', 'ERROR: Se permitió un cambio mayor a 50 posiciones', 'FAIL');
 END //
@@ -331,7 +331,7 @@ BEGIN
 
     CALL p_populate_db();
     -- Carlos Alcaraz está en posición 3 el 2024-05-01
-    -- Insertar posición 50 (cambio de 47 posiciones, dentro del límite) el 2024-06-01
+    -- Insertar posición 50 el 2024-06-01: ABS(50 - 3) = 47 posiciones (dentro del límite de 50)
     INSERT INTO ranking (player_id, fecha, posicion) VALUES (2, '2024-06-01', 50);
     CALL p_log_test('RANK-04', 'RN-Ranking: Se permitió correctamente un cambio de posición dentro del límite', 'PASS');
 END //

@@ -315,7 +315,7 @@ BEGIN
     FROM ranking
     WHERE player_id = NEW.player_id
       AND fecha < NEW.fecha
-      AND ranking_id <> NEW.ranking_id
+      AND ranking_id <> OLD.ranking_id
     ORDER BY fecha DESC
     LIMIT 1;
     
