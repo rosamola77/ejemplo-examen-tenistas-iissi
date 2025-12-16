@@ -274,6 +274,84 @@ BEGIN
 	 CALL p_log_test('T-1.2', 'ERROR: Se han añadido datos incorrectos', 'FAIL');
 END //
 DELIMITER ;
+
+-- =============================================================
+-- TESTS PARA LA TABLA RANKING
+-- =============================================================
+
+-- RN-Ranking-01: Constraint de unicidad (player_id, fecha)
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_ranking_unique_constraint()
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        CALL p_log_test('RANK-01', 'RN-Ranking: No se permiten duplicados (jugador, fecha)', 'PASS');
+
+    CALL p_populate_db();
+    -- Intentar insertar un ranking duplicado para el mismo jugador y fecha
+    INSERT INTO ranking (player_id, fecha, posicion) VALUES (2, '2024-01-01', 5);
+    CALL p_log_test('RANK-01', 'ERROR: Se permitió un ranking duplicado para el mismo jugador y fecha', 'FAIL');
+END //
+DELIMITER ;
+
+-- RN-Ranking-02: Validar que la posición esté en rango válido
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_ranking_position_range()
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        CALL p_log_test('RANK-02', 'RN-Ranking: La posición debe estar entre 1 y 1000', 'PASS');
+
+    CALL p_populate_db();
+    -- Intentar insertar una posición inválida (> 1000)
+    INSERT INTO ranking (player_id, fecha, posicion) VALUES (2, '2024-12-01', 1500);
+    CALL p_log_test('RANK-02', 'ERROR: Se permitió una posición fuera del rango válido', 'FAIL');
+END //
+DELIMITER ;
+
+-- RN-Ranking-03: Validar que el cambio de posición no exceda 50 lugares (caso: excede límite)
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_ranking_max_change_exceeded()
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        CALL p_log_test('RANK-03', 'RN-Ranking: No se permite cambio > 50 posiciones entre fechas consecutivas', 'PASS');
+
+    CALL p_populate_db();
+    -- Carlos Alcaraz está en posición 3 el 2024-05-01
+    -- Intentar insertar posición 60 (cambio de 57 posiciones) el 2024-06-01
+    INSERT INTO ranking (player_id, fecha, posicion) VALUES (2, '2024-06-01', 60);
+    CALL p_log_test('RANK-03', 'ERROR: Se permitió un cambio mayor a 50 posiciones', 'FAIL');
+END //
+DELIMITER ;
+
+-- RN-Ranking-04: Validar que el cambio de posición dentro del límite (50 lugares) sea permitido
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_ranking_valid_change()
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        CALL p_log_test('RANK-04', 'ERROR: No se permitió un cambio válido de posición', 'FAIL');
+
+    CALL p_populate_db();
+    -- Carlos Alcaraz está en posición 3 el 2024-05-01
+    -- Insertar posición 50 (cambio de 47 posiciones, dentro del límite) el 2024-06-01
+    INSERT INTO ranking (player_id, fecha, posicion) VALUES (2, '2024-06-01', 50);
+    CALL p_log_test('RANK-04', 'RN-Ranking: Se permitió correctamente un cambio de posición dentro del límite', 'PASS');
+END //
+DELIMITER ;
+
+-- RN-Ranking-05: Validar que se permita el primer ranking de un jugador (sin historial previo)
+DELIMITER //
+CREATE OR REPLACE PROCEDURE p_test_ranking_first_entry()
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        CALL p_log_test('RANK-05', 'ERROR: No se permitió insertar el primer ranking de un jugador', 'FAIL');
+
+    CALL p_populate_db();
+    -- Djokovic (player_id = 1) no tiene rankings en la BD
+    -- Debe permitirse insertar su primer ranking sin restricciones
+    INSERT INTO ranking (player_id, fecha, posicion) VALUES (1, '2024-01-01', 1);
+    CALL p_log_test('RANK-05', 'RN-Ranking: Se permitió correctamente el primer ranking de un jugador', 'PASS');
+END //
+DELIMITER ;
+
 -- =============================================================
 -- ORQUESTADOR: Ejecutar todos los tests
 -- =============================================================
@@ -294,6 +372,12 @@ BEGIN
     CALL p_test_ra02_max_players_a_trainer_has();
     CALL p_test_t1_valid();
     CALL p_test_t1_invalid();
+    -- Tests para la tabla Ranking
+    CALL p_test_ranking_unique_constraint();
+    CALL p_test_ranking_position_range();
+    CALL p_test_ranking_max_change_exceeded();
+    CALL p_test_ranking_valid_change();
+    CALL p_test_ranking_first_entry();
     -- Ejecutar test F1 (devuelve resultset)
     CALL p_test_f1_sets_won_by_player();
 
