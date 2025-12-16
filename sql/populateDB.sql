@@ -4,6 +4,7 @@ DELIMITER //
 CREATE OR REPLACE PROCEDURE p_populate_db()
 BEGIN
     -- Limpiar datos (orden seguro por claves foráneas)
+    DELETE FROM ranking;
     DELETE FROM sets;
     DELETE FROM matches;
     DELETE FROM players;
@@ -191,6 +192,32 @@ BEGIN
     INSERT INTO sets (match_id, winner_id, set_order, score) VALUES
         (16, 14, 1, '6-4'),
         (16, 14, 2, '7-5');
+
+    -- Datos de prueba para la tabla Ranking
+    -- Histórico de rankings para algunos jugadores con cambios válidos (< 50 posiciones)
+    INSERT INTO ranking (player_id, fecha, posicion) VALUES
+        -- Carlos Alcaraz (player_id = 2)
+        (2, '2024-01-01', 2),
+        (2, '2024-02-01', 1),   -- Subió 1 posición
+        (2, '2024-03-01', 1),   -- Se mantuvo
+        (2, '2024-04-01', 2),   -- Bajó 1 posición
+        (2, '2024-05-01', 3),   -- Bajó 1 posición
+        
+        -- Jannik Sinner (player_id = 3)
+        (3, '2024-01-01', 10),
+        (3, '2024-02-01', 8),   -- Subió 2 posiciones
+        (3, '2024-03-01', 5),   -- Subió 3 posiciones
+        (3, '2024-04-01', 4),   -- Subió 1 posición
+        
+        -- Daniil Medvedev (player_id = 4)
+        (4, '2024-01-01', 4),
+        (4, '2024-02-01', 5),   -- Bajó 1 posición
+        (4, '2024-03-01', 6),   -- Bajó 1 posición
+        
+        -- Rafael Nadal (player_id = 5)
+        (5, '2024-01-01', 3),
+        (5, '2024-02-01', 10),  -- Bajó 7 posiciones
+        (5, '2024-03-01', 15);  -- Bajó 5 posiciones
 END //
 DELIMITER ;
 
