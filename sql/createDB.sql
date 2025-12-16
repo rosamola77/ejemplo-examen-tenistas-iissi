@@ -11,6 +11,7 @@ DROP VIEW IF EXISTS v_players;
 DROP VIEW IF EXISTS v_referees;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS ranking;
 DROP TABLE IF EXISTS sets;
 DROP TABLE IF EXISTS matches;
 DROP TABLE IF EXISTS players;
@@ -48,6 +49,17 @@ CREATE TABLE players (
     FOREIGN KEY (player_id) REFERENCES people(person_id),
     FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id),
     CONSTRAINT rn_04_ranking CHECK (ranking > 0 AND ranking <= 1000)
+);
+
+CREATE TABLE ranking (
+    ranking_id INT AUTO_INCREMENT,
+    player_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    posicion INT NOT NULL,
+    PRIMARY KEY (ranking_id),
+    FOREIGN KEY (player_id) REFERENCES players(player_id),
+    CONSTRAINT rn_ranking_unique UNIQUE(player_id, fecha),
+    CONSTRAINT rn_ranking_posicion CHECK (posicion > 0 AND posicion <= 1000)
 );
 
 CREATE TABLE referees (
@@ -257,6 +269,38 @@ BEGIN
     IF (NEW.active = TRUE) AND (trainerid = NEW.player_id) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'RA-03: Estás intentando añadir un tenista activo que ya es entrenador';
+    END IF;
+END //
+
+-- ============================================================================
+-- RN-Ranking: La posición en el ranking no puede cambiar más de 50 lugares 
+-- entre dos fechas consecutivas para el mismo jugador
+-- ============================================================================
+
+CREATE OR REPLACE TRIGGER t_biu_ranking_position_change
+BEFORE INSERT OR UPDATE ON ranking
+FOR EACH ROW
+BEGIN
+    DECLARE v_previous_position INT;
+    DECLARE v_position_diff INT;
+    
+    -- Obtener la posición más reciente anterior a la nueva fecha para el mismo jugador
+    SELECT posicion INTO v_previous_position
+    FROM ranking
+    WHERE player_id = NEW.player_id
+      AND fecha < NEW.fecha
+      AND ranking_id <> IFNULL(NEW.ranking_id, 0)
+    ORDER BY fecha DESC
+    LIMIT 1;
+    
+    -- Si existe una posición previa, validar que el cambio no exceda 50 lugares
+    IF v_previous_position IS NOT NULL THEN
+        SET v_position_diff = ABS(NEW.posicion - v_previous_position);
+        
+        IF v_position_diff > 50 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'RN-Ranking: La posición no puede cambiar más de 50 lugares entre fechas consecutivas';
+        END IF;
     END IF;
 END //
 DELIMITER ;
